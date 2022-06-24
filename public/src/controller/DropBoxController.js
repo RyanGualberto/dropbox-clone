@@ -6,9 +6,26 @@ class DropBoxController {
         this.progressBarEl = this.snackModalEl.querySelector('.mc-progress-bar-fg');
         this.nameFileEl = this.snackModalEl.querySelector('.filename');
         this.timeLeftEl = this.snackModalEl.querySelector('.timeleft');
+        this.connectFireBase();
         this.initEvents();
     }
 
+    connectFireBase() {
+        this.config = {
+                apiKey: "AIzaSyCqOpXxBH1Och0kF_kqEiUyo84uR2HE6HY",
+                authDomain: "my-dropbox-clone-743da.firebaseapp.com",
+                databaseURL: "https://my-dropbox-clone-743da-default-rtdb.firebaseio.com",
+                projectId: "my-dropbox-clone-743da",
+                storageBucket: "my-dropbox-clone-743da.appspot.com",
+                messagingSenderId: "991783636576",
+                appId: "1:991783636576:web:ff21424ae106a3195f3d05",
+                measurementId: "G-4CZMBYFFMV"
+              };
+
+
+        firebase.initializeApp(this.config);
+
+    }
 
     initEvents() {
         this.btnSendFileEl.addEventListener("click", event => {
