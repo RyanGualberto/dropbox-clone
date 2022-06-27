@@ -1,7 +1,7 @@
 class DropBoxController {
     constructor() {
 
-        this.currentFolder = ['inicio'];
+        this.currentFolder = ['home'];
         this.btnSendFileEl = document.querySelector('#btn-send-file');
         this.inputFilesEl = document.querySelector('#files');
         this.snackModalEl = document.querySelector('#react-snackbar-root')
@@ -16,19 +16,19 @@ class DropBoxController {
 
         this.connectFireBase();
         this.initEvents();
-        this.readFiles();
+
+        this.openFolder();
     }
 
     connectFireBase() {
         this.config = {
-            apiKey: "AIzaSyCqOpXxBH1Och0kF_kqEiUyo84uR2HE6HY",
-            authDomain: "my-dropbox-clone-743da.firebaseapp.com",
-            databaseURL: "https://my-dropbox-clone-743da-default-rtdb.firebaseio.com",
-            projectId: "my-dropbox-clone-743da",
-            storageBucket: "my-dropbox-clone-743da.appspot.com",
-            messagingSenderId: "991783636576",
-            appId: "1:991783636576:web:ff21424ae106a3195f3d05",
-            measurementId: "G-4CZMBYFFMV"
+            apiKey: "AIzaSyCRsEtDXZ_4MUg0uayGXrW2w5yeNnfFyhE",
+            authDomain: "bright-calculus-344723.firebaseapp.com",
+            databaseURL: "https://bright-calculus-344723-default-rtdb.firebaseio.com",
+            projectId: "bright-calculus-344723",
+            storageBucket: "bright-calculus-344723.appspot.com",
+            messagingSenderId: "65431032413",
+            appId: "1:65431032413:web:3813648ca4ff03d81cb3b4"
         };
 
 
@@ -50,16 +50,25 @@ class DropBoxController {
             formData.append('path', file.filepath);
             formData.append('key', li.dataset.key);
 
-            promises.push(this.ajax( 'DELETE','/file' , formData));
+            promises.push(this.ajax('DELETE', '/file', formData));
         });
 
         return Promise.all(promises);
     }
- 
+
 
     initEvents() {
 
-        this.btnNewFolder.addEventListener('click')
+        this.btnNewFolder.addEventListener('click', e => {
+            let newPaste = prompt('Nova Pasta:')
+            if (newPaste) {
+                this.getFireBaseRef().push().set({
+                    name,
+                    type: 'folder',
+                    path: this.currentFolder.join('/')
+                });
+            }
+        })
 
         this.btnDelete.addEventListener('click', event => {
             this.removeTask().then(responses => {
@@ -70,7 +79,7 @@ class DropBoxController {
                 })
             });
         });
-         
+
 
 
         this.btnRename.addEventListener('click', e => {
@@ -120,8 +129,11 @@ class DropBoxController {
         });
     }
 
-    getFireBaseRef() {
-        return firebase.database().ref('files');
+    getFireBaseRef(path) {
+        if (!path) {
+            path = this.currentFolder.join('/');
+        }
+        return firebase.database().ref('path');
     }
 
     uploadComplete() {
@@ -135,7 +147,7 @@ class DropBoxController {
         this.snackModalEl.style.display = (show) ? 'block' : 'none';
     }
 
-    ajax(method = 'GET', url, formData = new FormData(), onprogress = function(){}, onloadstart = function(){}) {
+    ajax(method = 'GET', url, formData = new FormData(), onprogress = function () { }, onloadstart = function () { }) {
         return new Promise((resolve, reject) => {
             let request = new XMLHttpRequest();
             request.open(method, url);
@@ -144,7 +156,7 @@ class DropBoxController {
                 try {
                     resolve(JSON.parse(request.responseText));
                 } catch (error) {
-                    reject(error);                        
+                    reject(error);
                 }
             }
 
@@ -166,7 +178,7 @@ class DropBoxController {
             let formData = new FormData();
             formData.append('input-file', file);
 
-            promises.push(this.ajax('POST','/upload',  formData, () => {
+            promises.push(this.ajax('POST', '/upload', formData, () => {
                 this.uploadProgress(event, file);
             }, () => {
                 this.startUploadTime = Date.now();
@@ -210,15 +222,9 @@ class DropBoxController {
 
     getFileIconView(file) {
         switch (file.mimetype) {
-            case 'folder':
+            case '/folder':
                 return `
-                <svg width="160" height="160" viewBox="0 0 160 160" class="mc-icon-template-content tile__preview tile__preview--icon">
-                                        <title>content-folder-large</title>
-                                        <g fill="none" fill-rule="evenodd">
-                                            <path d="M77.955 53h50.04A3.002 3.002 0 0 1 131 56.007v58.988a4.008 4.008 0 0 1-4.003 4.005H39.003A4.002 4.002 0 0 1 35 114.995V45.99c0-2.206 1.79-3.99 3.997-3.99h26.002c1.666 0 3.667 1.166 4.49 2.605l3.341 5.848s1.281 2.544 5.12 2.544l.005.003z" fill="#71B9F4"></path>
-                                            <path d="M77.955 52h50.04A3.002 3.002 0 0 1 131 55.007v58.988a4.008 4.008 0 0 1-4.003 4.005H39.003A4.002 4.002 0 0 1 35 113.995V44.99c0-2.206 1.79-3.99 3.997-3.99h26.002c1.666 0 3.667 1.166 4.49 2.605l3.341 5.848s1.281 2.544 5.12 2.544l.005.003z" fill="#92CEFF"></path>
-                                        </g>
-                                    </svg>
+                   pasta
                 `;
                 break;
             case 'image/jpeg':
@@ -351,6 +357,7 @@ class DropBoxController {
                 break;
             default:
                 return `
+
                 <svg width="160" height="160" viewBox="0 0 160 160" class="mc-icon-template-content tile__preview tile__preview--icon">
                                         <title>1357054_617b.jpg</title>
                                         <defs>
@@ -390,6 +397,8 @@ class DropBoxController {
     }
 
     readFiles() {
+
+        this.lastFolder = this.currentFolder.join('/');
         this.getFireBaseRef().on('value', snapshot => {
 
             this.listFilesEl.innerHTML = '';
@@ -403,7 +412,30 @@ class DropBoxController {
         });
     }
 
+    openFolder() {
+        if (this.lastFolder) this.getFireBaseRef(this.lastFolder).off('value');
+
+        this.readFiles();
+    }
+
     initEventsLi(li) {
+
+        li.addEventListener('dblclick', e => {
+            let file = JSON.parse(li.dataset.file);
+
+            switch (file.type) {
+                case 'folder':
+                    this.currentFolder.push(file.name);
+                    this.openFolder();
+                    break;
+
+                default:
+                    window.open('/file?path=' + file.path);
+                    break;
+            }
+
+        });
+
         li.addEventListener('click', e => {
 
 
