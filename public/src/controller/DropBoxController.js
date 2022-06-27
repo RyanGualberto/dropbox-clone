@@ -1,5 +1,7 @@
 class DropBoxController {
     constructor() {
+
+        this.currentFolder = ['inicio'];
         this.btnSendFileEl = document.querySelector('#btn-send-file');
         this.inputFilesEl = document.querySelector('#files');
         this.snackModalEl = document.querySelector('#react-snackbar-root')
@@ -39,40 +41,37 @@ class DropBoxController {
     }
 
     removeTask() {
-        let promises =[];
+        let promises = [];
 
-        this.getSelection().forEach((li) => {
+        this.getSelection().forEach(li => {
             let file = JSON.parse(li.dataset.file);
-            let key = li.dataset.key;
 
-            let formData = new FormData()
+            let formData = new FormData();
+            formData.append('path', file.filepath);
+            formData.append('key', li.dataset.key);
 
-            formData.append('filepath', file.filepath);
-            formData.append('key', key);
-
-            promises.push(this.ajax('/file', 'DELETE', formData));
-
+            promises.push(this.ajax( 'DELETE','/file' , formData));
         });
 
         return Promise.all(promises);
     }
-
+ 
 
     initEvents() {
 
-        this.btnDelete.addEventListener("click", e => {
-            this.removeTask().then((responses) => {
+        this.btnNewFolder.addEventListener('click')
+
+        this.btnDelete.addEventListener('click', event => {
+            this.removeTask().then(responses => {
                 responses.forEach(response => {
-                  if (response.fields.key) {
-                    this.getFirebaseRef().child(response.fields.key).remove();
-                    alert('removendo ' + response.fields.key);
-                  }
+                    if (response.fields.key) {
+                        this.getFireBaseRef().child(response.fields.key).remove();
+                    }
                 })
-                console.log("responses");
-              }).catch((err) => {
-                console.log(err);
-              });
-          });
+            });
+        });
+         
+
 
         this.btnRename.addEventListener('click', e => {
             let li = this.getSelection()[0];
@@ -136,31 +135,30 @@ class DropBoxController {
         this.snackModalEl.style.display = (show) ? 'block' : 'none';
     }
 
-    ajax(url, method = "GET", formData = new FormData(), onprogress = function () { }, onloadstart = function () { }) {
+    ajax(method = 'GET', url, formData = new FormData(), onprogress = function(){}, onloadstart = function(){}) {
         return new Promise((resolve, reject) => {
-            let ajax = new XMLHttpRequest();
-
-            ajax.open(method, url);
-
-            ajax.onload = (event) => {
+            let request = new XMLHttpRequest();
+            request.open(method, url);
+            request.onload = () => {
+                this.modalShow(false);
                 try {
-                    resolve(JSON.parse(ajax.responseText));
-                } catch (e) {
-                    reject(e);
+                    resolve(JSON.parse(request.responseText));
+                } catch (error) {
+                    reject(error);                        
                 }
-            };
+            }
 
-            ajax.onerror = (event) => {
+            request.onerror = event => {
                 reject(event);
-            };
+            }
 
-            ajax.upload.onprogress = onprogress;
-
+            request.upload.onprogress = onprogress;
             onloadstart();
 
-            ajax.send(formData);
+            request.send(formData);
         });
     }
+
     uploadTask(files) {
         let promises = [];
 
@@ -168,7 +166,7 @@ class DropBoxController {
             let formData = new FormData();
             formData.append('input-file', file);
 
-            promises.push(this.ajax('/upload', 'POST', formData, () => {
+            promises.push(this.ajax('POST','/upload',  formData, () => {
                 this.uploadProgress(event, file);
             }, () => {
                 this.startUploadTime = Date.now();
